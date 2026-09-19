@@ -2,6 +2,7 @@
 __pycache__/
 .idea/
 .venv/
+.venv-*/
 build/
 _skbuild/
 *.egg-info/
@@ -15,6 +16,7 @@ src/*.html
 .coverage
 coverage.xml
 sde/
+.pyproject.toml.sdist.bak
 
 # Sphinx documentation
 site/
