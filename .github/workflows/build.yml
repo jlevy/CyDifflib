@@ -37,8 +37,14 @@ jobs:
           git apply ./tools/sdist.patch
           pip3 install build
           python3 -m build --sdist
+          # Isolated pip install uses the patched requires (no Cython).
           # test whether tarball contains all files required for compiling
           pip3 install dist/cydifflib-*.tar.gz
+
+      - name: Test sdist install
+        run: |
+          pip3 install pytest
+          pytest tests
 
       - uses: actions/upload-artifact@v4
         with:

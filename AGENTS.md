@@ -20,6 +20,32 @@ UV_CONFIG_FILE=uv.toml uv run --python 3.13 pytest
 Default local interpreter is 3.13.
 Also test 3.11, 3.12, 3.14, and 3.14t (`3.14` is GIL, `3.14t` is free-threaded).
 
+End-to-end from an installed interpreter (import + the same pytest suite CI runs
+after each wheel install):
+
+```bash
+for py in 3.11 3.12 3.13 3.14 3.14t; do
+  UV_CONFIG_FILE=uv.toml uv run --python "$py" python -c "import cydifflib; print(cydifflib.SequenceMatcher(None, 'abcd', 'bcde').ratio())"
+  UV_CONFIG_FILE=uv.toml uv run --python "$py" pytest
+done
+```
+
+3.9, 3.10, and PyPy are CI-only.
+
+Wheel jobs in `build.yml` set `CIBW_TEST_REQUIRES=pytest` and
+`CIBW_TEST_COMMAND=pytest {package}/tests`. That installs the built wheel, then
+runs `tests/` (including `test_gil_stays_disabled` on free-threaded tags).
+Skips:
+
+- Linux: `*_{aarch64,ppc64le,s390x}` and `*musllinux_*` (build only)
+- Windows: `*-win32` (build only); `win_arm64` is cross-compiled on `windows-latest`
+- macOS: `pp*-macosx_*` (build only)
+
+The sdist job generates `.cxx`, strips Cython from `build-system.requires`,
+installs the tarball, and runs pytest. Linux wheel tags are `cp39`–`cp314`,
+`cp314t`, and `pp39`–`pp311`. macOS/Windows also build cibuildwheel extras
+`cp315` / `cp315t` because those jobs do not set `CIBW_BUILD`.
+
 Isolated wheel and sdist:
 
 ```bash
