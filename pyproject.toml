@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.11",
-    "Cython>=3.0.12,<3.1.0"
+    "scikit-build-core>=1.0",
+    "Cython>=3.3.0,<3.4"
 ]
 build-backend = "scikit_build_core.build"
 
@@ -25,6 +25,7 @@ classifiers=[
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 
 [project.urls]
@@ -33,7 +34,13 @@ Repository = "https://github.com/rapidfuzz/CyDifflib.git"
 Issues = "https://github.com/rapidfuzz/CyDifflib/issues"
 Changelog = "https://github.com/rapidfuzz/CyDifflib/blob/main/CHANGELOG.md"
 
+[dependency-groups]
+dev = [
+  "pytest>=8",
+]
+
 [tool.scikit-build]
+minimum-version = "build-system.requires"
 sdist.include = [
   "src/cydifflib/*.cxx",
 ]
@@ -49,9 +56,14 @@ wheel.exclude = [
   "generate.sh"
 ]
 
-[tool.scikit-build.metadata.version]
+[[tool.dynamic-metadata]]
 provider = "scikit_build_core.metadata.regex"
+field = "version"
 input = "src/cydifflib/__init__.py"
+
+[tool.cibuildwheel]
+# 3.14t needs no enable in cibuildwheel 4.2.1; pypy-eol keeps pp39/pp310.
+enable = ["pypy", "pypy-eol"]
 
 [tool.black]
 line-length = 120

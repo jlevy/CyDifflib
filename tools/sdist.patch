@@ -1,13 +1,12 @@
 diff --git a/pyproject.toml b/pyproject.toml
-index 340fee3..87f6afe 100644
---- a/pyproject.toml
-+++ b/pyproject.toml
+--- a/pyproject.toml	2026-09-18 22:26:46
++++ b/pyproject.toml	2026-09-18 22:26:46
 @@ -1,7 +1,6 @@
  [build-system]
  requires = [
--    "scikit-build-core>=0.11",
--    "Cython>=3.0.12,<3.1.0"
-+    "scikit-build-core>=0.11"
+-    "scikit-build-core>=1.0",
+-    "Cython>=3.3.0,<3.4"
++    "scikit-build-core>=1.0"
  ]
  build-backend = "scikit_build_core.build"
  
