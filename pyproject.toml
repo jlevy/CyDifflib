@@ -62,7 +62,8 @@ field = "version"
 input = "src/cydifflib/__init__.py"
 
 [tool.cibuildwheel]
-enable = ["cpython-freethreading", "pypy"]
+# 3.14t needs no enable in cibuildwheel 4.2.1; pypy-eol keeps pp39/pp310.
+enable = ["pypy", "pypy-eol"]
 
 [tool.black]
 line-length = 120
