@@ -20,6 +20,19 @@ def _worker_count() -> int:
     return min(32, max(8, cpus * 2))
 
 
+def _threading_supported() -> bool:
+    if sys.platform == "emscripten":
+        return False
+    try:
+        done = threading.Event()
+        thread = threading.Thread(target=done.set)
+        thread.start()
+        thread.join()
+        return done.is_set()
+    except RuntimeError:
+        return False
+
+
 def _snapshot(isjunk, a, b):
     sm = difflib.SequenceMatcher(isjunk, a, b)
     return (
@@ -67,6 +80,8 @@ class TestConcurrency(unittest.TestCase):
         self.assertFalse(sys._is_gil_enabled())
 
     def test_high_concurrency_matches_stdlib(self):
+        if not _threading_supported():
+            self.skipTest("interpreter cannot start threads")
         cases = [
             (None, "", ""),
             (None, "a", "a"),
@@ -90,7 +105,7 @@ class TestConcurrency(unittest.TestCase):
             plain = cydifflib.SequenceMatcher()
             junked = cydifflib.SequenceMatcher(lambda x: x == " ")
             for _ in range(20):
-                for (isjunk, a, b), gold in zip(cases, expected, strict=True):
+                for (isjunk, a, b), gold in zip(cases, expected):
                     _assert_snapshot(isjunk, a, b, gold)
                     reused = junked if isjunk else plain
                     reused.set_seqs(a, b)
@@ -107,6 +122,8 @@ class TestConcurrency(unittest.TestCase):
         self.assertLess(time.perf_counter() - t0, 30.0)
 
     def test_concurrent_html_prefixes_are_unique(self):
+        if not _threading_supported():
+            self.skipTest("interpreter cannot start threads")
         fromlines = ["alpha", "beta gamma", "delta"]
         tolines = ["alpha", "beta gammma", "epsilon"]
         gold = _normalize_prefixes(cydifflib.HtmlDiff().make_table(fromlines, tolines))

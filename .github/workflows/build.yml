@@ -72,6 +72,11 @@ jobs:
 
       - uses: actions/setup-python@v5
 
+      - name: Skip vendoring host CRT on ARM64
+        if: matrix.arch == 'ARM64'
+        shell: bash
+        run: echo 'CIBW_REPAIR_WHEEL_COMMAND=delvewheel repair --exclude msvcp140.dll --exclude vcruntime140.dll --exclude vcruntime140_1.dll --exclude vcruntime140_threads.dll -w {dest_dir} -v {wheel}' >> "$GITHUB_ENV"
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.2.1
         with:
