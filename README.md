@@ -45,6 +45,21 @@ For a source build (for example from a SDist packaged) you only require a C++11 
 pip install git+https://github.com/rapidfuzz/CyDifflib.git@main
 ```
 
+## Development
+
+`pip install` remains the supported user path.
+Local work can use uv with the checked-in `uv.toml`:
+
+```bash
+UV_CONFIG_FILE=uv.toml uv sync --python 3.13 --all-groups --reinstall-package cydifflib
+UV_CONFIG_FILE=uv.toml uv run --python 3.13 pytest
+```
+
+Default is 3.13; also 3.11, 3.12, 3.14, and 3.14t (`3.14` GIL, `3.14t` free-threaded).
+Isolated: `UV_CONFIG_FILE=uv.toml uv build --python 3.13`.
+
+Free-threaded 3.14 (`3.14t`) needs Cython 3.3+ at build time. Use a separate `SequenceMatcher` per thread.
+
 ## 📖 Usage
 
 The library can be used in the same way as difflib. Just use the `cydifflib` module instead of `difflib`:

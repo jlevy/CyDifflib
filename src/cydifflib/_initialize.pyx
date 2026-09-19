@@ -1,5 +1,5 @@
 # distutils: language=c++
-# cython: language_level=3, binding=True, linetrace=True
+# cython: language_level=3, binding=True, linetrace=True, freethreading_compatible=True
 
 __all__ = ['get_close_matches', 'ndiff', 'restore', 'SequenceMatcher',
            'Differ','IS_CHARACTER_JUNK', 'IS_LINE_JUNK', 'context_diff',
@@ -7,6 +7,7 @@ __all__ = ['get_close_matches', 'ndiff', 'restore', 'SequenceMatcher',
 
 from heapq import nlargest as _nlargest
 from collections import namedtuple as _namedtuple
+import threading
 # todo add this once it is supported in all Python versions
 #from types import GenericAlias
 
@@ -116,6 +117,9 @@ cdef class SequenceMatcher:
     case.  SequenceMatcher is quadratic time for the worst case and has
     expected-case behavior dependent in a complicated way on how many
     elements the sequences have in common; best case time is linear.
+
+    A SequenceMatcher stores mutable scratch state on the instance. Do not
+    share one instance across threads; create one matcher per thread.
     """
 
     cdef public object a
@@ -129,7 +133,7 @@ cdef class SequenceMatcher:
     cdef public set bpopular
     cdef public object autojunk
 
-    # todo this is not threadsafe, which could be an problem in the long run
+    # Per-instance scratch for find_longest_match. Not process-global.
     cdef vector[Py_ssize_t] j2len_
     cdef vector[Py_ssize_t] newj2len_
     cdef Py_hash_t* a_
@@ -1722,13 +1726,19 @@ class HtmlDiff(object):
     make_file -- generates complete HTML file with a single side by side table
 
     See tools/scripts/diff.py for an example usage of this class.
+
+    make_table writes per-instance state; do not overlap calls on one HtmlDiff.
+    The shared HTML anchor counter is locked so separate instances can run
+    concurrently.
     """
 
     _file_template = _file_template
     _styles = _styles
     _table_template = _table_template
     _legend = _legend
+    # Unique fromN_/toN_ anchors across tables on one page.
     _default_prefix = 0
+    _prefix_lock = threading.Lock()
 
     def __init__(self,tabsize=8,wrapcolumn=None,linejunk=None,
                  charjunk=IS_CHARACTER_JUNK):
@@ -1929,9 +1939,10 @@ class HtmlDiff(object):
 
         # Generate a unique anchor prefix so multiple tables
         # can exist on the same HTML page without conflicts.
-        fromprefix = "from%d_" % HtmlDiff._default_prefix
-        toprefix = "to%d_" % HtmlDiff._default_prefix
-        HtmlDiff._default_prefix += 1
+        with HtmlDiff._prefix_lock:
+            fromprefix = "from%d_" % HtmlDiff._default_prefix
+            toprefix = "to%d_" % HtmlDiff._default_prefix
+            HtmlDiff._default_prefix += 1
         # store prefixes so line format method has access
         self._prefix = [fromprefix,toprefix]
 
